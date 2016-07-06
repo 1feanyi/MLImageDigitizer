@@ -11,8 +11,18 @@ namespace MLImageDigitizer
     {
         static void Main(string[] args)
         {
-            var FilePath = @"C:\Users\ifeanyi\Documents\visual studio 2013\Projects\MLImageDigitizer\MLImageDigitizer\Data\trainingdata.csv";
-            var reading = DataReader.ReadObservations(FilePath);
+            var distance = new ManhattanDistance();
+            var classifier = new BasicClassifier(distance);
+
+            var trainingPath = @"C:\Users\ifeanyi\Documents\visual studio 2013\Projects\MLImageDigitizer\MLImageDigitizer\Data\trainingdata.csv";
+            var training = DataReader.ReadObservations(trainingPath);
+            classifier.Train(training);
+
+            var validationPath = @"C:\Users\ifeanyi\Documents\visual studio 2013\Projects\MLImageDigitizer\MLImageDigitizer\Data\validationdata.csv";
+            var validation = DataReader.ReadObservations(validationPath);
+
+            var correct = Evaluator.Correct(validation, classifier);
+            Console.WriteLine("Correctly classified: {0:P2}", correct);
 
             Console.ReadLine();
         }
@@ -118,5 +128,27 @@ namespace MLImageDigitizer
             }
         }
 
+        public class Evaluator
+        {
+            public static double Correct (
+                IEnumerable<Observation> validationSet,
+                IClassifier classifier
+                )
+            {
+                return validationSet
+                    .Select(obs => Score(obs, classifier))
+                    .Average();
+            }
+
+            private static double Score (
+                Observation obs,
+                IClassifier classifier )
+            {
+                if (classifier.Predict(obs.Pixels) == obs.Label)
+                    return 1.0;
+                else
+                    return 0.0;
+            }
+        }
     }
 }
